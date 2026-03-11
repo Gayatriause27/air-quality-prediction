@@ -1,8 +1,9 @@
 import streamlit as st
 import joblib
 import numpy as np
+import pandas as pd
 import requests
-import matplotlib.pyplot as plt
+import altair as alt
 
 st.set_page_config(page_title="GreenAI AirSense", layout="centered")
 
@@ -15,7 +16,8 @@ st.subheader("AI-Based Air Quality Prediction & Real-Time Monitoring")
 
 @st.cache_resource
 def load_model():
-    return joblib.load("model/model.pkl")
+    model = joblib.load("model/model.pkl")
+    return model
 
 model = load_model()
 
@@ -25,20 +27,26 @@ model = load_model()
 
 st.header("🔮 Predict Air Quality (AI Model)")
 
-pm25 = st.number_input("PM2.5", min_value=0.0)
-pm10 = st.number_input("PM10", min_value=0.0)
-no2 = st.number_input("NO2", min_value=0.0)
+with st.form("prediction_form"):
 
-green_cover = st.slider("Green Cover (%)",0,100)
-traffic = st.slider("Traffic Density",0,100)
-industrial = st.slider("Industrial Emission",0,100)
-renewable = st.slider("Renewable Energy Usage",0,100)
+    pm25 = st.number_input("PM2.5", min_value=0.0)
+    pm10 = st.number_input("PM10", min_value=0.0)
+    no2 = st.number_input("NO2", min_value=0.0)
 
-if st.button("Predict AQI"):
+    green_cover = st.slider("Green Cover (%)",0,100)
+    traffic = st.slider("Traffic Density",0,100)
+    industrial = st.slider("Industrial Emission",0,100)
+    renewable = st.slider("Renewable Energy Usage",0,100)
 
-    data = np.array([[pm25, pm10, no2, green_cover, traffic, industrial, renewable]])
-    prediction = model.predict(data)
-    aqi = int(prediction[0])
+    predict_btn = st.form_submit_button("Predict AQI")
+
+if predict_btn:
+
+    with st.spinner("Predicting AQI..."):
+
+        data = np.array([[pm25, pm10, no2, green_cover, traffic, industrial, renewable]])
+        prediction = model.predict(data)
+        aqi = int(prediction[0])
 
     st.success(f"Predicted AQI: {aqi}")
 
@@ -53,14 +61,21 @@ if st.button("Predict AQI"):
     else:
         st.error("Air Quality: Hazardous 🚨")
 
-    # Graph
-    labels = ["PM2.5","PM10","NO2","Green","Traffic","Industrial","Renewable"]
-    values = [pm25,pm10,no2,green_cover,traffic,industrial,renewable]
+    # Fast Altair Chart
+    df = pd.DataFrame({
+        "Factor": ["PM2.5","PM10","NO2","Green Cover","Traffic","Industrial","Renewable"],
+        "Value": [pm25, pm10, no2, green_cover, traffic, industrial, renewable]
+    })
 
-    fig, ax = plt.subplots()
-    ax.bar(labels, values)
-    ax.set_title("Pollution Factors")
-    st.pyplot(fig)
+    chart = alt.Chart(df).mark_bar().encode(
+        x="Factor",
+        y="Value",
+        tooltip=["Factor","Value"]
+    ).properties(
+        title="Pollution Factors"
+    )
+
+    st.altair_chart(chart, use_container_width=True)
 
 # -------------------------------
 # REAL TIME AQI
@@ -73,9 +88,12 @@ city = st.text_input("Enter City Name")
 if st.button("Get Real-Time AQI"):
 
     try:
+
         url = f"https://api.waqi.info/feed/{city}/?token=0d7b964aed9d27f712884402c3f1b73dfe4fea47"
-        response = requests.get(url)
-        data = response.json()
+
+        with st.spinner("Fetching real-time AQI..."):
+            response = requests.get(url, timeout=5)
+            data = response.json()
 
         if data["status"] == "ok":
 
