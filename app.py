@@ -8,74 +8,91 @@ st.set_page_config(page_title="GreenAI AirSense", layout="centered")
 st.title("🌍 GreenAI AirSense")
 st.subheader("AI Air Quality Prediction & Monitoring")
 
-# --------------------
-# Load model only once
-# --------------------
-
+# -----------------------------
+# Load Model (cached)
+# -----------------------------
 @st.cache_resource
-def get_model():
+def load_model():
     return joblib.load("model/model.pkl")
 
-model = get_model()
+model = load_model()
 
-# --------------------
-# AI Prediction
-# --------------------
+# -----------------------------
+# Cache AQI API data
+# -----------------------------
+@st.cache_data(ttl=600)
+def get_real_aqi(city):
+    url = f"https://api.waqi.info/feed/{city}/?token=0d7b964aed9d27f712884402c3f1b73dfe4fea47"
+    response = requests.get(url, timeout=3)
+    return response.json()
 
+# -----------------------------
+# AQI Prediction Section
+# -----------------------------
 st.header("🔮 Predict AQI")
 
-pm25 = st.number_input("PM2.5",0.0)
-pm10 = st.number_input("PM10",0.0)
-no2 = st.number_input("NO2",0.0)
+with st.form("prediction_form"):
 
-green = st.slider("Green Cover (%)",0,100)
-traffic = st.slider("Traffic Density",0,100)
-industrial = st.slider("Industrial Emission",0,100)
-renewable = st.slider("Renewable Energy",0,100)
+    pm25 = st.number_input("PM2.5", min_value=0.0)
+    pm10 = st.number_input("PM10", min_value=0.0)
+    no2 = st.number_input("NO2", min_value=0.0)
 
-if st.button("Predict"):
+    green = st.slider("Green Cover (%)", 0, 100)
+    traffic = st.slider("Traffic Density", 0, 100)
+    industrial = st.slider("Industrial Emission", 0, 100)
+    renewable = st.slider("Renewable Energy", 0, 100)
 
-    data = np.array([[pm25,pm10,no2,green,traffic,industrial,renewable]])
+    submit = st.form_submit_button("Predict AQI")
 
-    pred = model.predict(data)[0]
-    aqi = int(pred)
+if submit:
 
-    st.success(f"AQI: {aqi}")
+    data = np.array([[pm25, pm10, no2, green, traffic, industrial, renewable]])
+    prediction = model.predict(data)[0]
+    aqi = int(prediction)
+
+    st.success(f"Predicted AQI: {aqi}")
 
     if aqi <= 50:
-        st.success("Good 🌿")
+        st.success("Air Quality: Good 🌿")
     elif aqi <= 100:
-        st.info("Moderate")
+        st.info("Air Quality: Moderate")
     elif aqi <= 150:
-        st.warning("Unhealthy for Sensitive Groups")
+        st.warning("Air Quality: Unhealthy for Sensitive Groups")
     elif aqi <= 200:
-        st.warning("Unhealthy")
+        st.warning("Air Quality: Unhealthy")
     else:
-        st.error("Hazardous 🚨")
+        st.error("Air Quality: Hazardous 🚨")
 
-# --------------------
-# Real Time AQI
-# --------------------
-
+# -----------------------------
+# Real Time AQI Section
+# -----------------------------
 st.header("🌐 Real-Time AQI")
 
-city = st.text_input("City")
+city = st.text_input("Enter City Name")
 
-if st.button("Get AQI"):
+if st.button("Get Real-Time AQI"):
 
     try:
+        data = get_real_aqi(city)
 
-        url = f"https://api.waqi.info/feed/{city}/?token=0d7b964aed9d27f712884402c3f1b73dfe4fea47"
+        if data["status"] == "ok":
 
-        r = requests.get(url,timeout=3).json()
+            aqi = data["data"]["aqi"]
+            st.success(f"Real-Time AQI in {city}: {aqi}")
 
-        if r["status"]=="ok":
-
-            aqi = r["data"]["aqi"]
-            st.success(f"{city} AQI: {aqi}")
+            if aqi <= 50:
+                st.success("Air Quality: Good 🌿")
+            elif aqi <= 100:
+                st.info("Air Quality: Moderate")
+            elif aqi <= 150:
+                st.warning("Air Quality: Unhealthy for Sensitive Groups")
+            elif aqi <= 200:
+                st.warning("Air Quality: Unhealthy")
+            else:
+                st.error("Air Quality: Hazardous 🚨")
 
         else:
             st.error("City not found")
 
     except:
-        st.error("API Error")
+        st.error("Error fetching data. Please try again.")
