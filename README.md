@@ -1,74 +1,68 @@
-Air Quality Prediction
-Overview
+🌍 Air Quality Prediction
+📌 Overview
 
-Air Quality Prediction is a machine learning project that forecasts air pollution levels using historical environmental data. By analyzing factors such as particulate matter (PM2.5, PM10), temperature, humidity, and wind speed, the system predicts future Air Quality Index (AQI) values. This helps in monitoring pollution levels and supporting environmental decision-making.
+Air Quality Prediction is a machine learning project that predicts air pollution levels using historical environmental data. By analyzing factors such as PM2.5, PM10, temperature, humidity, and wind speed, the system forecasts the Air Quality Index (AQI). This helps in monitoring pollution levels and raising awareness about environmental health.
 
-Objectives
+🎯 Objectives
 
-Predict future air quality levels.
+📊 Analyze historical air pollution data
 
-Analyze pollution trends using historical data.
+🤖 Build a machine learning model for AQI prediction
 
-Build a machine learning model for AQI prediction.
+🌫️ Predict future air quality levels
 
-Provide insights for environmental monitoring.
+🌱 Support environmental monitoring and awareness
 
-Features
+✨ Features
 
-Data preprocessing and cleaning
+🧹 Data cleaning and preprocessing
 
-Exploratory data analysis (EDA)
+📈 Exploratory Data Analysis (EDA)
 
-Visualization of pollution trends
+📊 Data visualization of pollution trends
 
-Machine learning model training
+🤖 Machine learning model training
 
-AQI prediction based on input parameters
+🔮 AQI prediction based on input parameters
 
-Technologies Used
+🛠️ Technologies Used
 
-Python
+🐍 Python
 
-Pandas
+📦 Pandas
 
-NumPy
+🔢 NumPy
 
-Scikit-learn
+🤖 Scikit-learn
 
-Matplotlib / Seaborn
+📊 Matplotlib / Seaborn
 
-Jupyter Notebook
+📓 Jupyter Notebook
 
-Dataset
+📂 Dataset
 
-The dataset used for this project includes environmental parameters such as:
+The dataset includes environmental parameters such as:
 
-PM2.5
+🌫️ PM2.5
 
-PM10
+🌫️ PM10
 
-Temperature
+🌡️ Temperature
 
-Humidity
+💧 Humidity
 
-Wind Speed
+🌬️ Wind Speed
 
-Air Quality Index (AQI)
+📊 Air Quality Index (AQI)
 
-Datasets can be obtained from open environmental data sources or government pollution monitoring websites.
+Public datasets can be obtained from environmental monitoring agencies or open data platforms.
 
-Project Workflow
+⚙️ Project Workflow
 
-Data Collection
-
-Data Cleaning and Preprocessing
-
-Exploratory Data Analysis (EDA)
-
-Feature Selection
-
-Model Training
-
-Model Evaluation
-
-Air Quality Prediction
+1️⃣ Data Collection
+2️⃣ Data Cleaning & Preprocessing
+3️⃣ Exploratory Data Analysis
+4️⃣ Feature Selection
+5️⃣ Model Training
+6️⃣ Model Evaluation
+7️⃣ AQI Prediction
