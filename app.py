@@ -1,118 +1,81 @@
 import streamlit as st
 import joblib
 import numpy as np
-import pandas as pd
 import requests
-import altair as alt
 
 st.set_page_config(page_title="GreenAI AirSense", layout="centered")
 
 st.title("🌍 GreenAI AirSense")
-st.subheader("AI-Based Air Quality Prediction & Real-Time Monitoring")
+st.subheader("AI Air Quality Prediction & Monitoring")
 
-# -------------------------------
-# Load model (cached)
-# -------------------------------
+# --------------------
+# Load model only once
+# --------------------
 
 @st.cache_resource
-def load_model():
-    model = joblib.load("model/model.pkl")
-    return model
+def get_model():
+    return joblib.load("model/model.pkl")
 
-model = load_model()
+model = get_model()
 
-# -------------------------------
-# AI PREDICTION
-# -------------------------------
+# --------------------
+# AI Prediction
+# --------------------
 
-st.header("🔮 Predict Air Quality (AI Model)")
+st.header("🔮 Predict AQI")
 
-with st.form("prediction_form"):
+pm25 = st.number_input("PM2.5",0.0)
+pm10 = st.number_input("PM10",0.0)
+no2 = st.number_input("NO2",0.0)
 
-    pm25 = st.number_input("PM2.5", min_value=0.0)
-    pm10 = st.number_input("PM10", min_value=0.0)
-    no2 = st.number_input("NO2", min_value=0.0)
+green = st.slider("Green Cover (%)",0,100)
+traffic = st.slider("Traffic Density",0,100)
+industrial = st.slider("Industrial Emission",0,100)
+renewable = st.slider("Renewable Energy",0,100)
 
-    green_cover = st.slider("Green Cover (%)",0,100)
-    traffic = st.slider("Traffic Density",0,100)
-    industrial = st.slider("Industrial Emission",0,100)
-    renewable = st.slider("Renewable Energy Usage",0,100)
+if st.button("Predict"):
 
-    predict_btn = st.form_submit_button("Predict AQI")
+    data = np.array([[pm25,pm10,no2,green,traffic,industrial,renewable]])
 
-if predict_btn:
+    pred = model.predict(data)[0]
+    aqi = int(pred)
 
-    with st.spinner("Predicting AQI..."):
-
-        data = np.array([[pm25, pm10, no2, green_cover, traffic, industrial, renewable]])
-        prediction = model.predict(data)
-        aqi = int(prediction[0])
-
-    st.success(f"Predicted AQI: {aqi}")
+    st.success(f"AQI: {aqi}")
 
     if aqi <= 50:
-        st.success("Air Quality: Good 🌿")
+        st.success("Good 🌿")
     elif aqi <= 100:
-        st.info("Air Quality: Moderate")
+        st.info("Moderate")
     elif aqi <= 150:
-        st.warning("Air Quality: Unhealthy for Sensitive Groups")
+        st.warning("Unhealthy for Sensitive Groups")
     elif aqi <= 200:
-        st.warning("Air Quality: Unhealthy")
+        st.warning("Unhealthy")
     else:
-        st.error("Air Quality: Hazardous 🚨")
+        st.error("Hazardous 🚨")
 
-    # Fast Altair Chart
-    df = pd.DataFrame({
-        "Factor": ["PM2.5","PM10","NO2","Green Cover","Traffic","Industrial","Renewable"],
-        "Value": [pm25, pm10, no2, green_cover, traffic, industrial, renewable]
-    })
+# --------------------
+# Real Time AQI
+# --------------------
 
-    chart = alt.Chart(df).mark_bar().encode(
-        x="Factor",
-        y="Value",
-        tooltip=["Factor","Value"]
-    ).properties(
-        title="Pollution Factors"
-    )
+st.header("🌐 Real-Time AQI")
 
-    st.altair_chart(chart, use_container_width=True)
+city = st.text_input("City")
 
-# -------------------------------
-# REAL TIME AQI
-# -------------------------------
-
-st.header("🌐 Real-Time Air Quality")
-
-city = st.text_input("Enter City Name")
-
-if st.button("Get Real-Time AQI"):
+if st.button("Get AQI"):
 
     try:
 
         url = f"https://api.waqi.info/feed/{city}/?token=0d7b964aed9d27f712884402c3f1b73dfe4fea47"
 
-        with st.spinner("Fetching real-time AQI..."):
-            response = requests.get(url, timeout=5)
-            data = response.json()
+        r = requests.get(url,timeout=3).json()
 
-        if data["status"] == "ok":
+        if r["status"]=="ok":
 
-            aqi = int(data["data"]["aqi"])
-            st.success(f"Real-Time AQI in {city}: {aqi}")
-
-            if aqi <= 50:
-                st.success("Air Quality: Good 🌿")
-            elif aqi <= 100:
-                st.info("Air Quality: Moderate")
-            elif aqi <= 150:
-                st.warning("Air Quality: Unhealthy for Sensitive Groups")
-            elif aqi <= 200:
-                st.warning("Air Quality: Unhealthy")
-            else:
-                st.error("Air Quality: Hazardous 🚨")
+            aqi = r["data"]["aqi"]
+            st.success(f"{city} AQI: {aqi}")
 
         else:
             st.error("City not found")
 
     except:
-        st.error("Error fetching data. Please try again.")
+        st.error("API Error")
